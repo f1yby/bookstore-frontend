@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
-import {Button, Col, Layout, Row, Space, Table} from "antd";
+import {Button, Col, Layout, Row, Space, Table, Typography} from "antd";
 import {ShoppingCartOutlined} from "@ant-design/icons";
 import {history} from "umi";
+import {WriterData} from "@/service/BookService";
+import PageSwitcher from "@/components/PageSwitcher";
 
 const columns = [
   {
@@ -14,13 +16,11 @@ const columns = [
   {
     title: 'Writer',
     dataIndex: 'writers',
-    render: (writers: string[]) => {
+    render: (writers: WriterData[]) => {
       let ans: JSX.Element[] = [];
       writers.forEach(writer => ans.push(<Button
-        type={'text'} onClick={() => history.push({
-        pathname: '/search',
-        query: {keyword: writer}
-      })}>{writer}</Button>));
+        type={'text'} onClick={() =>
+        PageSwitcher.jumpToSearchByKeyword(writer.name)}>{writer}</Button>));
       return <Space>{ans}</Space>;
     }
 
@@ -28,7 +28,10 @@ const columns = [
   {
     title: 'Price',
     dataIndex: 'price',
-    sorter: (a: { price: number; }, b: { price: number; }) => a.price - b.price
+    sorter: (a: { price: number; }, b: { price: number; }) => a.price - b.price,
+    render: (price: { toString: () => string | any[]; }) => <Typography.Text>
+      {price.toString()}{'￥'}
+    </Typography.Text>
   },
   {
     title: 'Count',
@@ -111,7 +114,7 @@ const dataSource = [
     count: 1,
   }
 ];
-export default function Page() {
+export default () => {
   const [rowSelectionState, setRowSelectionState] = useState<React.Key[]>([0]);
   console.log(rowSelectionState);
   return (

@@ -1,8 +1,9 @@
-import React from 'react';
-import {Button, Col, Input, Layout, Row, Space, Table} from "antd";
+import React, {useEffect, useState} from 'react';
+import {Button, Col, Input, Layout, Row, Space, Table, Typography} from "antd";
 import {ArrowRightOutlined, BookOutlined, ShoppingCartOutlined} from '@ant-design/icons';
-import './search.css';
 import {history, useLocation} from "umi";
+import {BookData, BookService, WriterData} from "@/service/BookService";
+import PageSwitcher from "@/components/PageSwitcher";
 
 const {Footer, Content} = Layout;
 
@@ -12,19 +13,24 @@ const DefaultLayout = () => <Layout>
       <Space direction={"vertical"} align={'center'} size={100}>
         <BookOutlined style={{fontSize: '500%',}}/>
         <Input.Search enterButton size={"large"} style={{width: '600px'}}
-                      onSearch={(key: string) => history.push({pathname: '/search', query: {keyword: key}})}/>
+                      onSearch={(key: string) => PageSwitcher.jumpToSearchByKeyword(key)}/>
       </Space>
     </Col>
   </Content>
   <Footer/>
 </Layout>;
 
+interface BookDataExtendedWithRef extends BookData {
+  ref: BookData;
+}
 
 const columns = [
   {
     title: 'Cover',
-    dataIndex: 'coverSrc',
-    render: (coverSrc: string) => <img src={coverSrc} alt={'book'} height={'80vh'}/>
+    dataIndex: 'ref',
+    render: (book: BookData) =>
+      <img src={book.coverSrc} alt={'book'} height={'80vh'}
+           onClick={() => PageSwitcher.jumpToDetailByBook(book)} style={{cursor: 'pointer'}}/>
   },
   {
     title: 'Book Name',
@@ -38,13 +44,13 @@ const columns = [
   {
     title: 'Writer',
     dataIndex: 'writers',
-    render: (writers: string[]) => {
+    render: (writers: WriterData[]) => {
       let ans: JSX.Element[] = [];
       writers.forEach(writer => ans.push(<Button
         type={'text'} onClick={() => history.push({
         pathname: '/search',
-        query: {keyword: writer}
-      })}>{writer}</Button>));
+        query: {keyword: writer.name}
+      })}>{writer.name}</Button>));
       return <Space>{ans}</Space>;
     }
 
@@ -52,7 +58,10 @@ const columns = [
   {
     title: 'Price',
     dataIndex: 'price',
-    sorter: (a: { price: number; }, b: { price: number; }) => a.price - b.price
+    sorter: (a: { price: number; }, b: { price: number; }) => a.price - b.price,
+    render: (price: { toString: () => string | any[]; }) => <Typography.Text>
+      {price.toString()}{'￥'}
+    </Typography.Text>
   },
   {
     title: 'In Stock',
@@ -71,79 +80,6 @@ const columns = [
     }
   }
 ]
-const dataSource = [
-  {
-    key: 0,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 1,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 2,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 3,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 4,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 5,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 6,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 7,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 8,
-    coverSrc: 'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg',
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  },
-  {
-    key: 9,
-    bookName: 'Basdk',
-    writers: ['aaa', 'bbb'],
-    price: 70,
-    count: 1,
-  }
-];
 
 
 export default () => {
@@ -156,6 +92,24 @@ export default () => {
   if (keywordFromQuery == null || keywordFromQuery == '') {
     return <DefaultLayout/>;
   } else {
+    const [bookState, setBookState] = useState<BookData[]>();
+    useEffect(() => {
+      BookService.getBooks(10, setBookState);
+      console.log(bookState);
+    }, []);
+
+    const bookWithPicture: BookDataExtendedWithRef[] = [];
+    bookState?.forEach(book => bookWithPicture.push({
+      bid: book.bid,
+      count: book.count,
+      coverSrc: book.coverSrc,
+      description: book.description,
+      ref: book,
+      price: book.price,
+      writers: book.writers,
+      bookName: book.bookName
+    }))
+
     return (
       <Layout>
         <Layout.Content style={{padding: '0 10vw 0'}}>
@@ -169,11 +123,11 @@ export default () => {
             </Col>
             <Col style={{alignContent: 'center'}}>
               <Input.Search enterButton size={"large"} style={{width: '600px'}}
-                            onSearch={(key: string) => history.push({pathname: '/search', query: {keyword: key}})}/>
+                            onSearch={(key: string) => PageSwitcher.jumpToSearchByKeyword(key)}/>
             </Col>
           </Row>
-          <Table tableLayout={"fixed"}
-                 dataSource={dataSource}
+          <Table tableLayout={"auto"}
+                 dataSource={bookWithPicture}
                  columns={columns}
                  pagination={{pageSize: 5, hideOnSinglePage: true, defaultPageSize: 9, position: ['bottomCenter']}}
           />

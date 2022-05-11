@@ -1,77 +1,87 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Card, Carousel, Col, Divider, Layout, Row} from 'antd';
+import {BookService, BookData} from '@/service/BookService'
+import {history} from "umi";
+import PageSwitcher from "@/components/PageSwitcher";
 
-const CardWrapper = (props: { bookName: string | undefined; bookSrc: string | undefined; bookId: number; bookDescription: string | undefined }) => {
-  return <Card style={{width: '10vw', border: 0}}
-               cover={<img alt={props.bookName} src={props.bookSrc}/>}
-               onClick={() => alert(props.bookId)}
+const CardWrapper = (props: { book: BookData; }) => {
+  const {book}: { book: BookData } = props;
+  return <Card style={{width: '10vw', margin: '1px'}}
+               cover={<img alt={book.bookName} src={book.coverSrc}/>}
+               onClick={() => PageSwitcher.jumpToDetailByBook(book)}
                hoverable
   >
     <Card.Meta
-      title={props.bookName}
-      description={props.bookDescription}
+      title={book.bookName}
+      description={book.description.trim().slice(0, 21).concat('...')}
     />
   </Card>
 }
-const CarouselItemWrapper = () => {
+
+const Cards = (props: { bookState: BookData[] }) => {
+
+  const cols: any[] = [];
+  props.bookState?.forEach(book => cols.push(<Col>
+    <CardWrapper book={book}/>
+  </Col>))
+  return <Row justify={"center"}>
+    {cols}
+  </Row>;
+}
+
+const CarouselWrapper = (props: { bookState: BookData[] }) => {
+  console.log(props.bookState);
+  const items: JSX.Element[] = [];
+  props.bookState?.slice(1, 5).forEach(item => items.push(<CarouselItemWrapper book={item}/>))
+  // if (props.bookState) {
+  //   items.push(<CarouselItemWrapper book={props.bookState[0]}/>);
+  // }
+  return <>
+    <Carousel autoplay style={{width: '60vw'}} dots={false}>
+      {items}
+    </Carousel>
+
+  </>
+
+}
+
+
+const CarouselItemWrapper = (props: { book: BookData }) => {
   return <Row style={{width: '60vw'}} justify={'center'}>
     <Col style={{width: '20vw'}}>
-      <img src={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} alt={'oo'}/>
+      <img src={props.book.coverSrc} alt={'book'} width={'100%'}
+           onClick={() => PageSwitcher.jumpToDetailByBook(props.book)} style={{cursor: 'pointer'}}/>
     </Col>
     <Col style={{width: '20vw'}}>
       <span style={{fontSize: '130%', fontStyle: 'italic'}}>
-        {'内斗就要亡国，亡国也要内斗！从南明的灭亡，看透人性的荒唐！荣获中国国家图书奖，北京市哲学社会科学优秀成果一等奖。明史大家顾诚代表作，豆瓣9.3分，不可不读的史学经典，读客熊猫君出品 '}
+        {props.book.description}
       </span>
     </Col>
   </Row>
 }
-export default function Page() {
-  return (
-    <Layout>
-      <Layout.Content style={{padding: '10vh 10vw'}}>
-        <Row justify={"center"}>
-          <Col>
-            <Carousel autoplay style={{width: '60vw'}} dots={false}>
-              <CarouselItemWrapper/>
-              <CarouselItemWrapper/>
-            </Carousel>
-          </Col>
-        </Row>
-        <Divider/>
-        <Row justify={"center"}>
-          <Col>
-            <CardWrapper bookName={'sa'} bookSrc={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} bookId={123}
-                         bookDescription={'北岛 著，理想国 出'}/> </Col>
-          <Col>
-            <CardWrapper bookName={'sa'} bookSrc={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} bookId={123}
-                         bookDescription={'北岛 著，理想国 出'}/>
-          </Col>
-          <Col>
-            <CardWrapper bookName={'sa'} bookSrc={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} bookId={123}
-                         bookDescription={'北岛 著，理想国 出'}/>
-          </Col>
-          <Col>
-            <CardWrapper bookName={'sa'} bookSrc={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} bookId={123}
-                         bookDescription={'北岛 著，理想国 出'}/>
-          </Col>
-          <Col>
-            <CardWrapper bookName={'sa'} bookSrc={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} bookId={123}
-                         bookDescription={'北岛 著，理想国 出'}/>
-          </Col>
-          <Col>
-            <CardWrapper bookName={'sa'} bookSrc={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} bookId={123}
-                         bookDescription={'北岛 著，理想国 出'}/>
-          </Col>
-          <Col>
-            <CardWrapper bookName={'sa'} bookSrc={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} bookId={123}
-                         bookDescription={'北岛 著，理想国 出'}/>
-          </Col>
-          <Col>
-            <CardWrapper bookName={'sa'} bookSrc={'https://img3m4.ddimg.cn/51/24/29383944-1_w_3.jpg'} bookId={123}
-                         bookDescription={'北岛 著，理想国 出'}/>
-          </Col>
-        </Row>
-      </Layout.Content>
-    </Layout>
-  );
+
+
+export default () => {
+  const [bookState, setBookState] = useState<BookData[]>();
+  useEffect(() => {
+    BookService.getBooks(10, setBookState);
+  }, []);
+  if (bookState) {
+    return (
+      <Layout>
+        <Layout.Content style={{padding: '10vh 10vw'}}>
+          <Row justify={"center"}>
+            <Col>
+              <CarouselWrapper bookState={bookState}/>
+            </Col>
+          </Row>
+          <Divider/>
+          <Cards bookState={bookState}/>
+        </Layout.Content>
+      </Layout>
+    );
+  } else {
+    return <></>
+  }
+
 }
