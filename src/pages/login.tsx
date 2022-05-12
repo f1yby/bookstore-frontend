@@ -2,10 +2,16 @@ import React from 'react';
 import styles from './login.css';
 import {Layout, Form, Input, Checkbox, Button, Row, Col, Divider} from "antd";
 import {BookOutlined} from "@ant-design/icons";
+import {SignData, UserService} from "@/service/UserService";
+
+interface SignDataExtendWithRemember extends SignData {
+  remember: boolean
+}
 
 export default () => {
-  const onFinish = (values: any) => {
-    console.log('Success:', values);
+  const onFinish = (values: SignDataExtendWithRemember) => {
+    console.log(values)
+    UserService.Login(values);
   };
 
   const onFinishFailed = (errorInfo: any) => {
@@ -78,20 +84,20 @@ export default () => {
                   span: 16,
                 }}
               >
-                <Button type="primary" block>
+                <Button type="primary" htmlType="submit" block>
                   Login
                 </Button>
               </Form.Item>
-              <Form.Item
-                wrapperCol={{
-                  offset: 4,
-                  span: 16,
-                }}
-              >
-                <Button type='default' block>
-                  Signup
-                </Button>
-              </Form.Item>
+              {/*<Form.Item*/}
+              {/*  wrapperCol={{*/}
+              {/*    offset: 4,*/}
+              {/*    span: 16,*/}
+              {/*  }}*/}
+              {/*>*/}
+              {/*  <Button type='default' block>*/}
+              {/*    Signup*/}
+              {/*  </Button>*/}
+              {/*</Form.Item>*/}
             </Form>
           </Col>
         </Row>

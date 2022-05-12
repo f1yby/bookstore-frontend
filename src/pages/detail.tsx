@@ -6,15 +6,18 @@ import {BookData, WriterData} from "@/service/BookService";
 import PageSwitcher from "@/components/PageSwitcher";
 
 
-const WritersWrapper = (props: { writers: WriterData[]; }) => {
-  let buttons: JSX.Element[] = [];
-  props.writers.forEach((writer) => buttons.push(
-    <Col>
-      <Button type={"text"}
-              onClick={() => PageSwitcher.jumpToSearchByKeyword(writer.name)}>{writer.name}</Button>{/*TODO getByWriter*/}
-    </Col>
-  ));
-  return <>{buttons}</>;
+// const WritersWrapper = (props: { writers: WriterData[]; }) => {
+//   let buttons: JSX.Element[] = [];
+//   props.writers.forEach((writer) => buttons.push(
+//     <Col>
+//       <Button type={"text"}
+//               onClick={() => PageSwitcher.jumpToSearchByKeyword(writer.name)}>{writer.name}</Button>{/*TODO getByWriter*/}
+//     </Col>
+//   ));
+//   return <>{buttons}</>;
+// }
+const WritersWrapper = (props: { writers: string; }) => {
+  return <Typography.Text>{props.writers}</Typography.Text>;
 }
 export default () => {
   const {query} = history.location;
@@ -46,8 +49,8 @@ export default () => {
             <Divider/>
             <Row align={'middle'}>
               <Col>
-                <Typography.Text strong>
-                  Writers:
+                <Typography.Text strong style={{margin:'0 10px 0'}}>
+                  Writer:
                 </Typography.Text>
               </Col>
               <WritersWrapper writers={book.writers}/>

@@ -64,7 +64,7 @@ const CarouselItemWrapper = (props: { book: BookData }) => {
 export default () => {
   const [bookState, setBookState] = useState<BookData[]>();
   useEffect(() => {
-    BookService.getBooks(10, setBookState);
+    BookService.getBooks(setBookState);
   }, []);
   if (bookState) {
     return (

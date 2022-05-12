@@ -12,7 +12,7 @@ export interface BookData {
   count: number,
   coverSrc: string,
   bookName: string,
-  writers: WriterData[],
+  writers:string,
   description: string,
   price: number,
 }
@@ -21,16 +21,15 @@ const getBookByBid = (bid: number) => {
 
 }
 
-const getBooks = (num: number, callback: (arg0: any) => void) => {
-  console.log({'number': num.toString()});
-  postRequest(bookStoreApi + '/book/getBooks', {'number': num.toString()}, callback);
+const getBooks = ( callback: (arg0: any) => void) => {
+  postRequest(bookStoreApi + '/book/getBooks', {}, callback);
 }
 const getBookByWid = (wid: number) => {
 
 }
 
-const getBookByKeyword = (keyword: string) => {
-
+const getBookByKeyword = (keyword: string,callback: (arg0: any) => void) => {
+  postRequest(bookStoreApi + '/book/getBooksByKeyword', {keyword: keyword}, callback);
 }
 
 const getBookByName = (name: string) => {

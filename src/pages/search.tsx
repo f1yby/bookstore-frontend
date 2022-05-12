@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {Component, useEffect, useState} from 'react';
 import {Button, Col, Input, Layout, Row, Space, Table, Typography} from "antd";
 import {ArrowRightOutlined, BookOutlined, ShoppingCartOutlined} from '@ant-design/icons';
 import {history, useLocation} from "umi";
@@ -13,7 +13,7 @@ const DefaultLayout = () => <Layout>
       <Space direction={"vertical"} align={'center'} size={100}>
         <BookOutlined style={{fontSize: '500%',}}/>
         <Input.Search enterButton size={"large"} style={{width: '600px'}}
-                      onSearch={(key: string) => PageSwitcher.jumpToSearchByKeyword(key)}/>
+                      onSearch={(key: string) => {PageSwitcher.jumpToSearchByKeyword(key);location.reload();}}/>
       </Space>
     </Col>
   </Content>
@@ -44,15 +44,16 @@ const columns = [
   {
     title: 'Writer',
     dataIndex: 'writers',
-    render: (writers: WriterData[]) => {
-      let ans: JSX.Element[] = [];
-      writers.forEach(writer => ans.push(<Button
-        type={'text'} onClick={() => history.push({
-        pathname: '/search',
-        query: {keyword: writer.name}
-      })}>{writer.name}</Button>));
-      return <Space>{ans}</Space>;
-    }
+    // render: (writers: WriterData[]) => {
+    //   let ans: JSX.Element[] = [];
+    //   writers.forEach(writer => ans.push(<Button
+    //     type={'text'} onClick={() => history.push({
+    //     pathname: '/search',
+    //     query: {keyword: writer.name}
+    //   })}>{writer.name}</Button>));
+    //   return <Space>{ans}</Space>;
+    // }
+
 
   },
   {
@@ -85,18 +86,20 @@ const columns = [
 export default () => {
 
   // @ts-ignore
+
+
+
   const {query} = useLocation();
-  //console.log(query);
+  console.log(query);
   const keywordFromQuery = (query != undefined) ? query['keyword'] : null;
-  console.log(keywordFromQuery);
   if (keywordFromQuery == null || keywordFromQuery == '') {
     return <DefaultLayout/>;
   } else {
     const [bookState, setBookState] = useState<BookData[]>();
     useEffect(() => {
-      BookService.getBooks(10, setBookState);
+      BookService.getBookByKeyword(keywordFromQuery, setBookState);
       console.log(bookState);
-    }, []);
+    }, [query]);
 
     const bookWithPicture: BookDataExtendedWithRef[] = [];
     bookState?.forEach(book => bookWithPicture.push({

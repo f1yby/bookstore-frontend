@@ -6,7 +6,10 @@ const jumpToDetailByBook = (book: BookData) => history.push({pathname: '/detail'
 
 const jumpToSearchByKeyword = (key: string) => history.push({pathname: '/search', query: {keyword: key}})
 
+const jumpToHome = () => history.push({pathname: '/'})
+
 export default {
   jumpToDetailByBook,
   jumpToSearchByKeyword,
+  jumpToHome
 }
