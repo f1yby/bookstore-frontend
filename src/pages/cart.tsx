@@ -1,37 +1,75 @@
-import React, {useState} from 'react';
-import {Button, Col, Layout, Row, Space, Table, Typography} from "antd";
-import {ShoppingCartOutlined} from "@ant-design/icons";
-import {history} from "umi";
-import {WriterData} from "@/service/BookService";
-import PageSwitcher from "@/components/PageSwitcher";
+import React, { useEffect, useState } from 'react';
+import { Button, Col, Layout, Row, Space, Table, Typography } from 'antd';
+import { ShoppingCartOutlined } from '@ant-design/icons';
+import { history } from 'umi';
+import { BookData, WriterData } from '@/service/BookService';
+import PageSwitcher from '@/components/PageSwitcher';
+import { CartItemData, CartService } from '@/service/CartService';
 
+interface refWithFlipper {
+  book: BookData;
+  flipper: () => void;
+}
+
+interface CartItemWrapper {
+  key: number;
+  name: string;
+  writers: string;
+  price: number;
+  count: number;
+  ref: refWithFlipper;
+}
+
+const CartItemWrapperFromCartItem = (
+  item: CartItemData,
+  flipper: () => void,
+): CartItemWrapper => {
+  return {
+    key: item.oiid,
+    name: item.book.name,
+    writers: item.book.writers,
+    price: item.book.price,
+    count: item.count,
+    ref: {
+      book: item.book,
+      flipper: flipper,
+    },
+  };
+};
+
+let flipper: boolean = false;
 const columns = [
   {
+    title: 'Cover',
+    dataIndex: 'ref',
+    render: (book: refWithFlipper) => (
+      <img
+        src={book.book.image}
+        alt={'book'}
+        height={'80vh'}
+        onClick={() => PageSwitcher.jumpToDetailByBook(book.book)}
+        style={{ cursor: 'pointer' }}
+      />
+    ),
+  },
+  {
     title: 'Book',
-    dataIndex: 'bookName',
-    render: (book: string) => <span
-      style={{cursor: 'pointer'}}
-      onClick={() => history.push({pathname: '/search', query: {keyword: book}})}>{book}</span>
+    dataIndex: 'name',
   },
   {
     title: 'Writer',
     dataIndex: 'writers',
-    render: (writers: WriterData[]) => {
-      let ans: JSX.Element[] = [];
-      writers.forEach(writer => ans.push(<Button
-        type={'text'} onClick={() =>
-        PageSwitcher.jumpToSearchByKeyword(writer.name)}>{writer}</Button>));
-      return <Space>{ans}</Space>;
-    }
-
   },
   {
     title: 'Price',
     dataIndex: 'price',
-    sorter: (a: { price: number; }, b: { price: number; }) => a.price - b.price,
-    render: (price: { toString: () => string | any[]; }) => <Typography.Text>
-      {price.toString()}{'￥'}
-    </Typography.Text>
+    sorter: (a: { price: number }, b: { price: number }) => a.price - b.price,
+    render: (price: { toString: () => string | any[] }) => (
+      <Typography.Text>
+        {price.toString()}
+        {'￥'}
+      </Typography.Text>
+    ),
   },
   {
     title: 'Count',
@@ -39,122 +77,105 @@ const columns = [
   },
   {
     title: 'Action',
-    dataIndex: 'bId',
-    render: (bId: number) => {
-      return <Space>
-        <Button type={'text'} onClick={() => {
-        }}>add</Button>
-        <Button type={'text'} onClick={() => {
-        }}>remove</Button>
-      </Space>
-    }
-  }
-]
-const dataSource = [
-  {
-    key: 0,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 1,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 2,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 3,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 4,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 5,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 6,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 7,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
-  }, {
-    key: 8,
-    bookName: 'Book',
-    writers: ['aaa', 'bbb'],
-    price: 50,
-    count: 1,
+    dataIndex: 'ref',
+    render: (book: refWithFlipper) => {
+      return (
+        <Space>
+          <Button
+            type={'text'}
+            onClick={() => {
+              CartService.addToCart(book.book.bid);
+              book.flipper();
+            }}
+          >
+            add
+          </Button>
+          <Button
+            type={'text'}
+            onClick={() => {
+              CartService.removeFromCart(book.book.bid);
+              book.flipper();
+            }}
+          >
+            remove
+          </Button>
+        </Space>
+      );
+    },
   },
-  {
-    key: 9,
-    bookName: 'Basdk',
-    writers: ['aaa', 'bbb'],
-    price: 70,
-    count: 1,
-  }
 ];
+
 export default () => {
-  const [rowSelectionState, setRowSelectionState] = useState<React.Key[]>([0]);
+  const [rowSelectionState, setRowSelectionState] = useState<React.Key[]>();
+  const [cartDataItemState, setCartDataItemState] = useState<CartItemData[]>();
+  const [flipperState, setFlipperState] = useState<boolean>();
+  const flipper = () => {
+    setFlipperState(!flipperState);
+  };
+  useEffect(() => CartService.getCart(setCartDataItemState), [flipperState]);
+
+  const cartData: CartItemWrapper[] = [];
+  cartDataItemState?.forEach((item) =>
+    cartData.push(CartItemWrapperFromCartItem(item, flipper)),
+  );
+  console.log(cartData);
+  console.log(cartDataItemState);
+
   console.log(rowSelectionState);
   return (
     <Layout>
-      <Layout.Content style={{padding: '0 10vw', height: '80vh'}}>
+      <Layout.Content style={{ padding: '0 10vw', height: '80vh' }}>
         <Row align={'middle'}>
           <Col>
-            <ShoppingCartOutlined style={{fontSize: '500%'}}/>
+            <ShoppingCartOutlined style={{ fontSize: '500%' }} />
           </Col>
-          <Col style={{alignContent: 'center'}}>
-            <h1 style={{fontSize: '500%', margin: 0}}>Cart</h1>
+          <Col style={{ alignContent: 'center' }}>
+            <h1 style={{ fontSize: '500%', margin: 0 }}>Cart</h1>
           </Col>
-        </Row>
-        <Table tableLayout={"fixed"} rowSelection={{
-          selectedRowKeys: rowSelectionState,
-          onChange: (selectedRowKeys) => {
-            console.log("selectedRowKeys changed: ", selectedRowKeys);
-            setRowSelectionState(selectedRowKeys);
-          }
-        }}
-               dataSource={dataSource}
-               columns={columns}
-               pagination={{pageSize: 9, hideOnSinglePage: true, defaultPageSize: 9, position: ['bottomCenter']}}
-        />
-
-      </Layout.Content>
-      <Layout.Footer style={{padding: '0 10vw'}}>
-        <Row justify={"space-between"} style={{width: '100%'}}>
-          <Col>
-            <Button size={"large"} type={'ghost'}>
-              Remove All
-            </Button>
-          </Col>
-          <Col>
-            <Button size={"large"} type={'primary'}>
+          <Col offset={15} span={4}>
+            <Button
+              size={'large'}
+              type={'primary'}
+              onClick={() => {
+                const oiid: number[] = [];
+                if (rowSelectionState?.length != 0) {
+                  if (cartDataItemState) {
+                    rowSelectionState?.forEach((index) =>
+                      cartDataItemState.forEach((item) =>
+                        item.oiid == index ? oiid.push(item.oiid) : null,
+                      ),
+                    );
+                    console.log(oiid);
+                    CartService.checkOut(oiid);
+                    history.push({ pathname: '/order' });
+                  }
+                }
+              }}
+            >
               Check Out
             </Button>
           </Col>
         </Row>
-      </Layout.Footer>
+        <Table
+          tableLayout={'fixed'}
+          rowSelection={{
+            selectedRowKeys: rowSelectionState,
+            onChange: (selectedRowKeys) => {
+              console.log('selectedRowKeys changed: ', selectedRowKeys);
+              setRowSelectionState(selectedRowKeys);
+            },
+          }}
+          dataSource={cartData}
+          columns={columns}
+          pagination={{
+            hideOnSinglePage: true,
+            pageSize: 5,
+            position: ['bottomCenter'],
+          }}
+          scroll={{ x: '80vw', y: '80vh' }}
+        />
+      </Layout.Content>
+      <Layout.Footer style={{ padding: '0 10vw' }}></Layout.Footer>
     </Layout>
   );
-}
+};
